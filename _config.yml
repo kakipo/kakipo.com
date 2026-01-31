@@ -1,0 +1,9 @@
+title: kakipo.com
+description: kakipo's personal portal
+url: "https://kakipo.com"
+
+# GitHub Pages で使用するテーマ
+theme: minima
+
+# マークダウン設定
+markdown: kramdown
