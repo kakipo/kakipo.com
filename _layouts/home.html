@@ -43,6 +43,8 @@
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Hiragino Sans", sans-serif;
+      touch-action: none;       /* ブラウザのスクロール/ズーム操作を無効化 */
+      overscroll-behavior: none; /* iOS のバウンス効果を抑止 */
     }
 
     /* Visually hidden but accessible to screen readers */
@@ -155,7 +157,7 @@
 <body>
   <a href="#main-content" class="skip-link">メインコンテンツへスキップ</a>
   <canvas id="gol-canvas" aria-hidden="true"></canvas>
-  <button id="gol-reset" aria-label="reset Game of Life" lang="en">☯</button>
+  <button id="gol-reset" aria-label="reset Game of Life" lang="en">☯&#xFE0E;</button>
   <div id="gol-status" aria-live="polite" aria-atomic="true" class="sr-only"></div>
 
   <main id="main-content" class="content">
@@ -405,46 +407,50 @@
       gol.placeCell(x, y);
     }
 
-    const isTouchDevice = /iPhone|iPad/.test(navigator.userAgent);
-    if (isTouchDevice) {
+    // --- タッチ操作 (スマホ・タブレット) ---
+    // canvas は z-index:-1 のため、タッチはカード等の最上位要素に当たる。
+    // window レベルで拾い、リセットボタン上のみスキップする。
+    if (navigator.maxTouchPoints > 0) {
       let touchStartTime = 0, touchStartX = 0, touchStartY = 0;
 
-      canvas.addEventListener('touchstart', (e) => {
-        e.preventDefault();
+      window.addEventListener('touchstart', (e) => {
+        if (resetBtn.contains(e.target)) return;
         touchStartTime = Date.now();
         touchStartX    = e.touches[0].clientX;
         touchStartY    = e.touches[0].clientY;
         throttledStep();
-      }, { passive: false });
+      }, { passive: true }); // passive: true でタップの遅延を回避
 
-      canvas.addEventListener('touchmove', (e) => {
-        e.preventDefault();
+      window.addEventListener('touchmove', (e) => {
+        if (resetBtn.contains(e.target)) return;
+        e.preventDefault(); // スクロール抑止 (passive: false が必要)
         throttledStep();
       }, { passive: false });
 
-      canvas.addEventListener('touchend', (e) => {
-        e.preventDefault();
-        const dt   = Date.now() - touchStartTime;
-        const dx   = e.changedTouches[0].clientX - touchStartX;
-        const dy   = e.changedTouches[0].clientY - touchStartY;
+      window.addEventListener('touchend', (e) => {
+        if (resetBtn.contains(e.target)) return;
+        const dt = Date.now() - touchStartTime;
+        const dx = e.changedTouches[0].clientX - touchStartX;
+        const dy = e.changedTouches[0].clientY - touchStartY;
         // 短いタップ（250ms以内・12px以内の移動）でセルを配置
         if (dt < 250 && Math.hypot(dx, dy) < 12) {
           throttledPlace(touchStartX, touchStartY);
         }
-      }, { passive: false });
-    } else {
-      window.addEventListener('mousemove', (e) => {
-        if (cardEl.contains(e.target))  return; // カード上ではスキップ
-        if (resetBtn.contains(e.target)) return; // リセットボタン上ではスキップ
-        throttledStep();
-      });
-
-      window.addEventListener('click', (e) => {
-        if (cardEl.contains(e.target))  return; // カード上ではスキップ
-        if (resetBtn.contains(e.target)) return; // リセットボタン上ではスキップ
-        throttledPlace(e.clientX, e.clientY);
-      });
+      }, { passive: true });
     }
+
+    // --- マウス操作 (デスクトップ) ---
+    window.addEventListener('mousemove', (e) => {
+      if (cardEl.contains(e.target))   return; // カード上ではスキップ
+      if (resetBtn.contains(e.target)) return; // リセットボタン上ではスキップ
+      throttledStep();
+    });
+
+    window.addEventListener('click', (e) => {
+      if (cardEl.contains(e.target))   return; // カード上ではスキップ
+      if (resetBtn.contains(e.target)) return; // リセットボタン上ではスキップ
+      throttledPlace(e.clientX, e.clientY);
+    });
   }
   </script>
 </body>
