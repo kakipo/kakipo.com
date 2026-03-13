@@ -48,7 +48,16 @@
 - フォーカスリング（`:focus` スタイル）
 - タッチターゲットサイズ `min-height: 44px`
 
+## SEO 対応
+
+- `<title>`: `内藤研介 / Kensuke NAITO / kakipo`
+- `<meta description>`: 名前・職業・出身地を含む説明文
+- `<link rel="canonical">`: `https://kakipo.com/`
+- Open Graph タグ（`og:title`, `og:description`, `profile:*`）
+- schema.org `Person`（JSON-LD）: 名前・別名・職業・出身地・SNS リンクを構造化
+- `sitemap.xml`: Google クロール促進
+- `robots.txt`: 全クローラー許可 + サイトマップ場所を明示
+
 ## 今後の予定
 
-- schema.org `Person` 構造化データの追加
 - 外部記事・インタビューへのリンク追加
