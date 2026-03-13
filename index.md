@@ -25,5 +25,7 @@ layout: home
     <a href="https://www.linkedin.com/in/kakipo" rel="noopener noreferrer" lang="en">LinkedIn</a>
     <span aria-hidden="true">|</span>
     <a href="mailto:kakipo@gmail.com" lang="en">Email</a>
+    <span aria-hidden="true">|</span>
+    <a href="https://naito.taiso.club" rel="noopener noreferrer">内藤体操倶楽部</a>
   </div>
 </nav>
