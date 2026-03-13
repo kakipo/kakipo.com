@@ -364,7 +364,7 @@
           if (col < 0 || col >= cols || row < 0 || row >= rows) continue;
           const i    = row * cols + col;
           current[i] = 1;
-          age[i]     = MAX_AGE; // 次世代で即爆発
+          age[i]     = MAX_AGE - 3; // 3世代後に爆発
           mutAge[i]  = 0;
           ctx.fillRect(col * CELL_SIZE, row * CELL_SIZE, CELL_SIZE, CELL_SIZE);
         }
