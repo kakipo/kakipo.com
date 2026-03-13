@@ -107,9 +107,10 @@
       -webkit-backdrop-filter: blur(14px);
       border: 1px solid rgba(0, 0, 0, 0.5);
       border-radius: 6px;
-      padding: 10px 16px;
+      padding: 10px 14px;
       min-height: 44px;
-      font-size: 0.8rem;
+      font-size: 1.2rem;
+      line-height: 1;
       font-family: inherit;
       color: #555;
       cursor: pointer;
@@ -126,7 +127,7 @@
 <body>
   <a href="#main-content" class="skip-link">メインコンテンツへスキップ</a>
   <canvas id="gol-canvas" aria-hidden="true"></canvas>
-  <button id="gol-reset" aria-label="reset Game of Life" lang="en">reset</button>
+  <button id="gol-reset" aria-label="reset Game of Life" lang="en">☯</button>
   <div id="gol-status" aria-live="polite" aria-atomic="true" class="sr-only"></div>
 
   <main id="main-content" class="content">
@@ -135,20 +136,52 @@
 
   <script>
   /**
-   * Conway's Game of Life
+   * Conway's Game of Life — Age & Mutation Edition
    *
    * Renders to a fixed full-viewport canvas as a decorative background.
    * Advances one generation on mousemove (desktop) or touch (mobile).
    * Respects prefers-reduced-motion.
+   *
+   * Extensions:
+   *   - Cells darken as they age (young = light gray, old = dark gray).
+   *   - At MAX_AGE, a cell explodes: it dies and mutates random neighbors.
+   *   - Mutated cells flash pink for MUTATION_FLASH frames, then normalise.
    */
 
-  const CELL_SIZE   = 10;
-  const COLOR_ALIVE = '#aaaaaa';
-  const COLOR_DEAD  = '#fafafa';
+  const CELL_SIZE      = 10;
+  const COLOR_DEAD     = '#fafafa';
+  const MAX_AGE        = 25;   // generations until a cell explodes
+  const MUTATION_FLASH = 8;    // frames the pink flash lasts
+  const MUTATION_PROB  = 0.4;  // probability each neighbor receives a mutation
+
+  // Alive colors: light gray (young) → dark gray (old), precomputed for speed
+  const ALIVE_COLORS = (() => {
+    const arr = new Array(MAX_AGE + 1);
+    for (let a = 0; a <= MAX_AGE; a++) {
+      const t = a / MAX_AGE;
+      const v = Math.round(210 - 165 * t); // rgb(210,210,210) → rgb(45,45,45)
+      arr[a] = `rgb(${v},${v},${v})`;
+    }
+    return arr;
+  })();
+
+  // Mutation flash colors: blood-rust red (fresh) → normal young alive (faded)
+  // Index MUTATION_FLASH = blood-rust, index 1 = near-normal alive
+  const FLASH_COLORS = (() => {
+    const arr = new Array(MUTATION_FLASH + 1);
+    for (let f = 1; f <= MUTATION_FLASH; f++) {
+      const t = f / MUTATION_FLASH; // 1 = blood-rust, 0 = normal
+      const r = Math.round(210 - 34 * t);  // 210 → 176
+      const g = Math.round(210 - 170 * t); // 210 → 40
+      const b = Math.round(210 - 180 * t); // 210 → 30
+      arr[f] = `rgb(${r},${g},${b})`;
+    }
+    return arr;
+  })();
 
   function createGameOfLife(canvas) {
     const ctx = canvas.getContext('2d');
-    let cols, rows, current, next;
+    let cols, rows, current, next, age, mutAge;
 
     /**
      * (Re)initialize the grid to a random state and fill the canvas.
@@ -160,12 +193,16 @@
       cols = Math.floor(canvas.width  / CELL_SIZE);
       rows = Math.floor(canvas.height / CELL_SIZE);
 
-      // Typed arrays for compact, cache-friendly cell storage
-      current = new Uint8Array(cols * rows);
-      next    = new Uint8Array(cols * rows);
+      const size = cols * rows;
+      current = new Uint8Array(size);
+      next    = new Uint8Array(size);
+      age     = new Uint8Array(size);  // generation count per alive cell
+      mutAge  = new Uint8Array(size);  // mutation flash countdown
 
-      for (let i = 0; i < current.length; i++) {
-        current[i] = Math.round(Math.random()); // 0 = dead, 1 = alive
+      for (let i = 0; i < size; i++) {
+        current[i] = Math.round(Math.random());
+        // Randomise initial ages so the gradient is visible from the start
+        age[i] = current[i] ? Math.floor(Math.random() * MAX_AGE) : 0;
       }
 
       drawAll();
@@ -186,32 +223,68 @@
     }
 
     /**
-     * Advance one generation using Conway's rules:
-     *   - A live cell with 2 or 3 neighbors survives.
-     *   - A dead cell with exactly 3 neighbors becomes alive.
-     *   - All other cells die or remain dead.
-     * Only redraws cells whose state has changed (partial update).
+     * Advance one generation:
+     *
+     * Phase 1 — Conway's rules produce the base next generation.
+     * Phase 2 — Cells that reached MAX_AGE explode: they die and
+     *            randomly mutate neighbors (set alive + pink flash).
+     * Phase 3 — Update age/mutAge, redraw alive cells and transitions.
      */
     function step() {
-      // Compute next generation into the back buffer
-      for (let row = 0; row < rows; row++) {
-        for (let col = 0; col < cols; col++) {
-          const i         = row * cols + col;
-          const alive     = current[i];
-          const neighbors = countNeighbors(col, row);
-          next[i] = alive ? (neighbors === 2 || neighbors === 3 ? 1 : 0)
-                          : (neighbors === 3 ? 1 : 0);
-        }
-      }
-
-      // Redraw only the cells that changed state
+      // Phase 1: Conway's rules → next generation
       for (let row = 0; row < rows; row++) {
         for (let col = 0; col < cols; col++) {
           const i = row * cols + col;
-          if (next[i] !== current[i]) {
-            ctx.fillStyle = next[i] ? COLOR_ALIVE : COLOR_DEAD;
+          const alive = current[i];
+          const n = countNeighbors(col, row);
+          next[i] = alive ? (n === 2 || n === 3 ? 1 : 0) : (n === 3 ? 1 : 0);
+        }
+      }
+
+      // Phase 2: aged-out cells explode, mutating random neighbors
+      for (let row = 0; row < rows; row++) {
+        for (let col = 0; col < cols; col++) {
+          const i = row * cols + col;
+          if (current[i] !== 1 || age[i] < MAX_AGE) continue;
+          next[i] = 0; // explode
+          for (let dr = -1; dr <= 1; dr++) {
+            for (let dc = -1; dc <= 1; dc++) {
+              if (dr === 0 && dc === 0) continue;
+              if (Math.random() >= MUTATION_PROB) continue;
+              const r = (row + dr + rows) % rows;
+              const c = (col + dc + cols) % cols;
+              const j = r * cols + c;
+              next[j]   = 1;
+              mutAge[j] = MUTATION_FLASH;
+            }
+          }
+        }
+      }
+
+      // Phase 3: update age/mutAge, redraw alive cells and state transitions
+      for (let row = 0; row < rows; row++) {
+        for (let col = 0; col < cols; col++) {
+          const i        = row * cols + col;
+          const wasAlive = current[i];
+          const isAlive  = next[i];
+
+          // Update age: increment survivors, reset newborns, clear the dead
+          if (isAlive) {
+            age[i] = wasAlive ? Math.min(age[i] + 1, MAX_AGE) : 1;
+          } else {
+            age[i] = 0;
+          }
+
+          // Redraw all alive cells (colour changes with age) and state transitions
+          if (isAlive || wasAlive !== isAlive) {
+            ctx.fillStyle = isAlive
+              ? (mutAge[i] > 0 ? FLASH_COLORS[mutAge[i]] : ALIVE_COLORS[age[i]])
+              : COLOR_DEAD;
             ctx.fillRect(col * CELL_SIZE, row * CELL_SIZE, CELL_SIZE, CELL_SIZE);
           }
+
+          // Decay mutation flash after drawing
+          if (mutAge[i] > 0) mutAge[i]--;
         }
       }
 
@@ -223,7 +296,10 @@
     function drawAll() {
       for (let row = 0; row < rows; row++) {
         for (let col = 0; col < cols; col++) {
-          ctx.fillStyle = current[row * cols + col] ? COLOR_ALIVE : COLOR_DEAD;
+          const i = row * cols + col;
+          ctx.fillStyle = current[i]
+            ? (mutAge[i] > 0 ? FLASH_COLORS[mutAge[i]] : ALIVE_COLORS[age[i]])
+            : COLOR_DEAD;
           ctx.fillRect(col * CELL_SIZE, row * CELL_SIZE, CELL_SIZE, CELL_SIZE);
         }
       }
