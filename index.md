@@ -8,7 +8,7 @@ layout: home
   a (cat | fashion | interior | music | piano | plants | science fiction | software | tattoo | travel) enthusiast from peaceful city Hiroshima. NO WAR.
 </p>
 <p style="margin-top:10px; line-height:1.8;">
-  ソフトウェアエンジニア / 起業家 / 投資家<br>
+  ソフトウェアエンジニア / 起業家 / 投資家 / 次男 / 夫 / 娘の父<br>
   1984年生まれ。広島 → カリフォルニア → 東京
 </p>
 <p>ペスカタリアン。魚・乳・卵は食べる。肉（哺乳類・鳥類）は食べない。</p>
