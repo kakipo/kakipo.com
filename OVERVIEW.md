@@ -23,6 +23,7 @@
 - コンテンツ部分はすりガラス（frosted glass）カード
 - 背景は Conway's Game of Life アニメーション（全画面 Canvas）
 - マウス移動 / タッチ操作でセルを進化させる（50ms スロットリング）
+- マウス移動はコンテンツカード外のみ反応（カード・リセットボタン上はスキップ）
 - `prefers-reduced-motion` を尊重し、アニメーションを無効化
 
 ## Game of Life 実装

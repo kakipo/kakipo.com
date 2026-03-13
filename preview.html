@@ -255,7 +255,13 @@
       canvas.addEventListener('touchmove',  (e) => { e.preventDefault(); throttledStep(); }, { passive: false });
       canvas.addEventListener('touchend',   (e) => { e.preventDefault(); throttledStep(); }, { passive: false });
     } else {
-      canvas.addEventListener('mousemove', throttledStep);
+      const contentEl  = document.getElementById('main-content');
+      const resetBtn   = document.getElementById('gol-reset');
+      window.addEventListener('mousemove', (e) => {
+        if (contentEl.contains(e.target)) return; // カード上ではスキップ
+        if (resetBtn.contains(e.target))  return; // リセットボタン上ではスキップ
+        throttledStep();
+      });
     }
   }
   </script>
