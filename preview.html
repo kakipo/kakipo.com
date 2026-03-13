@@ -3,40 +3,13 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>kakipo.com</title>
+  <title>kakipo.com — preview</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Hiragino Sans", sans-serif;
     }
-
-    /* Visually hidden but accessible to screen readers */
-    .sr-only {
-      position: absolute;
-      width: 1px;
-      height: 1px;
-      padding: 0;
-      margin: -1px;
-      overflow: hidden;
-      clip: rect(0,0,0,0);
-      white-space: nowrap;
-      border: 0;
-    }
-
-    /* Skip link — visible only on keyboard focus */
-    .skip-link {
-      position: absolute;
-      top: -100%;
-      left: 8px;
-      padding: 8px 16px;
-      background: #fff;
-      color: #000;
-      text-decoration: underline;
-      border-radius: 4px;
-      z-index: 100;
-    }
-    .skip-link:focus { top: 8px; }
 
     #gol-canvas {
       position: fixed;
@@ -83,6 +56,33 @@
     #gol-reset:hover { color: #111; }
     #gol-reset:focus { outline: 2px solid #333; outline-offset: 2px; }
 
+    /* Visually hidden but accessible to screen readers */
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0,0,0,0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    /* Skip link — visible only on keyboard focus */
+    .skip-link {
+      position: absolute;
+      top: -100%;
+      left: 8px;
+      padding: 8px 16px;
+      background: #fff;
+      color: #000;
+      text-decoration: underline;
+      border-radius: 4px;
+      z-index: 100;
+    }
+    .skip-link:focus { top: 8px; }
+
     @media (prefers-reduced-motion: reduce) {
       #gol-canvas { display: none; }
       #gol-reset  { display: none; }
@@ -96,7 +96,31 @@
   <div id="gol-status" aria-live="polite" aria-atomic="true" class="sr-only"></div>
 
   <main id="main-content" class="content">
-    {{ content }}
+    <h1>内藤 研介</h1>
+    <p style="color:#666; margin-top:4px;"><span lang="en">Kensuke NAITO</span> &nbsp;·&nbsp; @kakipo</p>
+    <p style="margin-top:10px; line-height:1.8;" lang="en">
+      a (cat | fashion | interior | music | piano | plants | science fiction | software | tattoo | travel) enthusiast from peaceful city Hiroshima. NO WAR.
+    </p>
+    <p style="margin-top:10px; line-height:1.8;">
+      ソフトウェアエンジニア / 起業家 / 投資家<br>
+      1984年生まれ。広島 → カリフォルニア → 東京
+    </p>
+    <p style="margin-top:10px;">ペスカタリアン。魚・乳製品・卵は食べる。肉（哺乳類・鳥類）は食べない。</p>
+
+    <nav aria-labelledby="links-heading" style="margin-top:2em;">
+      <h2 id="links-heading" lang="en" style="margin-top:24px;">Links</h2>
+      <div class="links" style="margin-top:8px;">
+        <a href="https://x.com/kakipo" aria-label="X (Twitter)" rel="noopener noreferrer" lang="en">X</a>
+        <span aria-hidden="true">|</span>
+        <a href="https://www.facebook.com/kensuke.naito" rel="noopener noreferrer" lang="en">Facebook</a>
+        <span aria-hidden="true">|</span>
+        <a href="https://github.com/kakipo" rel="noopener noreferrer" lang="en">GitHub</a>
+        <span aria-hidden="true">|</span>
+        <a href="https://www.linkedin.com/in/kakipo" rel="noopener noreferrer" lang="en">LinkedIn</a>
+        <span aria-hidden="true">|</span>
+        <a href="mailto:kakipo@gmail.com" lang="en">Email</a>
+      </div>
+    </nav>
   </main>
 
   <script>
