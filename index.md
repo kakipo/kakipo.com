@@ -11,7 +11,7 @@ layout: home
   1984年生まれ。広島 → カリフォルニア → 東京<br>
   ソフトウェアエンジニア / 起業家 / 投資家 / 次男 / 夫 / 娘の父
 </p>
-<p>ペスカタリアン。魚・乳・卵は食べる。肉（哺乳類・鳥類）は食べない。</p>
+<p style="margin-top:10px; line-height:1.8;">ペスカタリアン。魚・乳・卵は食べる。肉（哺乳類・鳥類）は食べない。</p>
 
 <nav aria-labelledby="links-heading" style="margin-top:2em;">
   <h2 id="links-heading" lang="en">Links</h2>
