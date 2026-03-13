@@ -405,13 +405,22 @@
     resetBtn.addEventListener('click', announceReset);
 
     const STEP_INTERVAL_MS  = 50;  // mousemove のステップ間隔 (ms)
+    const STEP_MIN_DIST     = 5;   // mousemove で次のステップに必要な最小移動距離 (px)
     const PLACE_INTERVAL_MS = 150; // クリック/タップのセル配置間隔 (ms)
     let lastStepAt  = 0;
+    let lastStepX   = 0;
+    let lastStepY   = 0;
     let lastPlaceAt = 0;
 
-    function throttledStep() {
+    function throttledStep(x, y) {
       const now = Date.now();
       if (now - lastStepAt < STEP_INTERVAL_MS) return;
+      // 座標が渡された場合は移動距離も確認する
+      if (x !== undefined) {
+        const dx = x - lastStepX, dy = y - lastStepY;
+        if (dx * dx + dy * dy < STEP_MIN_DIST * STEP_MIN_DIST) return;
+        lastStepX = x; lastStepY = y;
+      }
       lastStepAt = now;
       gol.step();
     }
@@ -441,7 +450,7 @@
         if (resetBtn.contains(e.target)) return;
         // 小さい画面（スマホ横向きなど）はスクロールを許可してGoLステップのみ実行
         if (window.innerHeight > 500) e.preventDefault();
-        throttledStep();
+        throttledStep(e.touches[0].clientX, e.touches[0].clientY);
       }, { passive: false });
 
       window.addEventListener('touchend', (e) => {
@@ -460,7 +469,7 @@
     window.addEventListener('mousemove', (e) => {
       if (cardEl.contains(e.target))   return; // カード上ではスキップ
       if (resetBtn.contains(e.target)) return; // リセットボタン上ではスキップ
-      throttledStep();
+      throttledStep(e.clientX, e.clientY);
     });
 
     window.addEventListener('click', (e) => {
