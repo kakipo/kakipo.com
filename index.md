@@ -2,32 +2,29 @@
 layout: home
 ---
 
-<div class="name">内藤 研究</div>
-<div class="handle">Kensuke Naito &nbsp;·&nbsp; @kakipo</div>
-<div class="tagline">
+<h1>内藤 研介</h1>
+<p style="color:#666; margin-top:4px;">Kensuke NAITO &nbsp;·&nbsp; @kakipo</p>
+<p style="margin-top:10px; line-height:1.8;">
   ソフトウェアエンジニア / 起業家 / 投資家<br>
-  広島 → カリフォルニア → 東京
-</div>
+  1984年生まれ。広島 → カリフォルニア → 東京
+</p>
+<p style="margin-top:10px; line-height:1.8;">
+  a (cat | fashion | interior | music | piano | plants | science fiction | software | tattoo | travel) enthusiast from peaceful city Hiroshima. NO WAR.
+</p>
 
----
+<p>ペスカタリアン。魚・乳製品・卵は食べる。肉（哺乳類・鳥類）は食べない。</p>
 
-## Now
-
-- 起業・事業運営
-- エンジェル投資
-
-## Food
-
-ペスカタリアン。魚・乳製品・卵は食べる。肉（哺乳類・鳥類）は食べない。
-
-## Links
-
-<div class="links">
-  <a href="https://x.com/kakipo">X</a>
-  <a href="https://www.facebook.com/kensuke.naito">Facebook</a>
-  <a href="https://github.com/kakipo">GitHub</a>
-  <a href="https://www.linkedin.com/in/kakipo">LinkedIn</a>
-  <a href="mailto:kakipo@gmail.com">Email</a>
-</div>
-
-<p class="last-updated">Last updated: 2026-03-14</p>
+<nav aria-labelledby="links-heading">
+  <h2 id="links-heading">Links</h2>
+  <div class="links">
+    <a href="https://x.com/kakipo" aria-label="X (Twitter)" rel="noopener noreferrer">X</a>
+    <span aria-hidden="true">|</span>
+    <a href="https://www.facebook.com/kensuke.naito" rel="noopener noreferrer">Facebook</a>
+    <span aria-hidden="true">|</span>
+    <a href="https://github.com/kakipo" rel="noopener noreferrer">GitHub</a>
+    <span aria-hidden="true">|</span>
+    <a href="https://www.linkedin.com/in/kakipo" rel="noopener noreferrer">LinkedIn</a>
+    <span aria-hidden="true">|</span>
+    <a href="mailto:kakipo@gmail.com">Email</a>
+  </div>
+</nav>

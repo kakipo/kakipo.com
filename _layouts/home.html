@@ -9,7 +9,6 @@
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Hiragino Sans", sans-serif;
-      color: #333;
     }
 
     #gol-canvas {
@@ -21,122 +20,183 @@
 
     .content {
       max-width: 640px;
-      margin: 0 auto;
-      padding: 80px 24px 80px;
+      margin: 60px auto;
+      padding: 40px;
+      background: rgba(255, 255, 255, 0.65);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-radius: 12px;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.10);
     }
 
-    .name {
-      font-size: 2rem;
-      font-weight: 700;
-      letter-spacing: 0.02em;
-      line-height: 1.2;
+    .links a:focus {
+      outline: 2px solid #333;
+      outline-offset: 2px;
+      border-radius: 2px;
     }
+    .links span { color: #ccc; margin: 0 6px; }
 
-    .handle {
-      font-size: 0.95rem;
-      color: #888;
-      margin-top: 4px;
-      letter-spacing: 0.03em;
-    }
-
-    .tagline {
-      margin-top: 10px;
-      font-size: 0.95rem;
-      color: #555;
-      line-height: 1.8;
-    }
-
-    hr {
-      border: none;
-      border-top: 1px solid #ddd;
-      margin: 32px 0;
-    }
-
-    h2 {
+    #gol-reset {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: rgba(255, 255, 255, 0.65);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(0, 0, 0, 0.12);
+      border-radius: 6px;
+      padding: 10px 16px;
+      min-height: 44px;
       font-size: 0.8rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.12em;
-      color: #aaa;
-      margin-bottom: 12px;
-    }
-
-    ul {
-      list-style: none;
-      padding: 0;
-    }
-
-    ul li {
-      font-size: 0.95rem;
-      color: #444;
-      line-height: 1.9;
-    }
-
-    p {
-      font-size: 0.95rem;
-      color: #444;
-      line-height: 1.8;
-    }
-
-    .links a {
-      display: inline-block;
-      font-size: 0.9rem;
+      font-family: inherit;
       color: #555;
-      text-decoration: none;
-      margin-right: 16px;
-      line-height: 2.2;
+      cursor: pointer;
     }
+    #gol-reset:hover { color: #111; }
+    #gol-reset:focus { outline: 2px solid #333; outline-offset: 2px; }
 
-    .links a:hover {
-      color: #111;
-    }
-
-    .last-updated {
-      font-size: 0.8rem;
-      color: #bbb;
-      margin-top: 32px;
+    @media (prefers-reduced-motion: reduce) {
+      #gol-canvas { display: none; }
+      #gol-reset  { display: none; }
     }
   </style>
 </head>
 <body>
-  <canvas id="gol-canvas"></canvas>
+  <canvas id="gol-canvas" aria-hidden="true"></canvas>
+  <button id="gol-reset" aria-label="Game of Life をリセット">reset</button>
 
-  <div class="content">
+  <main class="content">
     {{ content }}
-  </div>
+  </main>
 
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
-  <script src="{{ '/assets/js/jquery.ca2d.min.js' | relative_url }}"></script>
   <script>
-  $(document).ready(function() {
-    function initCanvas() {
-      var w = window.innerWidth;
-      var h = window.innerHeight;
-      $("#gol-canvas").attr("width", w).attr("height", h);
-      $("#gol-canvas").removeData("ca2d");
-      $("#gol-canvas").ca2d({
-        color: function(state) {
-          return state == 1 ? "#dfdfdf" : "#fafafa";
+  /**
+   * Conway's Game of Life
+   *
+   * Renders to a fixed full-viewport canvas as a decorative background.
+   * Advances one generation on mousemove (desktop) or touch (mobile).
+   * Respects prefers-reduced-motion.
+   */
+
+  const CELL_SIZE   = 10;
+  const COLOR_ALIVE = '#aaaaaa';
+  const COLOR_DEAD  = '#fafafa';
+
+  function createGameOfLife(canvas) {
+    const ctx = canvas.getContext('2d');
+    let cols, rows, current, next;
+
+    /**
+     * (Re)initialize the grid to a random state and fill the canvas.
+     * Called on first load and on window resize.
+     */
+    function init() {
+      canvas.width  = window.innerWidth;
+      canvas.height = window.innerHeight;
+      cols = Math.floor(canvas.width  / CELL_SIZE);
+      rows = Math.floor(canvas.height / CELL_SIZE);
+
+      // Typed arrays for compact, cache-friendly cell storage
+      current = new Uint8Array(cols * rows);
+      next    = new Uint8Array(cols * rows);
+
+      for (let i = 0; i < current.length; i++) {
+        current[i] = Math.round(Math.random()); // 0 = dead, 1 = alive
+      }
+
+      drawAll();
+    }
+
+    /** Count the 8 neighbors of a cell, wrapping at edges (toroidal grid). */
+    function countNeighbors(col, row) {
+      let count = 0;
+      for (let dr = -1; dr <= 1; dr++) {
+        for (let dc = -1; dc <= 1; dc++) {
+          if (dr === 0 && dc === 0) continue;
+          const r = (row + dr + rows) % rows;
+          const c = (col + dc + cols) % cols;
+          count += current[r * cols + c];
         }
-      });
-      $("#gol-canvas").ca2d("step");
+      }
+      return count;
     }
 
-    $(window).on("resize", initCanvas);
-    initCanvas();
+    /**
+     * Advance one generation using Conway's rules:
+     *   - A live cell with 2 or 3 neighbors survives.
+     *   - A dead cell with exactly 3 neighbors becomes alive.
+     *   - All other cells die or remain dead.
+     * Only redraws cells whose state has changed (partial update).
+     */
+    function step() {
+      // Compute next generation into the back buffer
+      for (let row = 0; row < rows; row++) {
+        for (let col = 0; col < cols; col++) {
+          const i         = row * cols + col;
+          const alive     = current[i];
+          const neighbors = countNeighbors(col, row);
+          next[i] = alive ? (neighbors === 2 || neighbors === 3 ? 1 : 0)
+                          : (neighbors === 3 ? 1 : 0);
+        }
+      }
 
-    var agent = navigator.userAgent;
-    if (agent.search(/iPhone/) != -1 || agent.search(/iPad/) != -1) {
-      $("#gol-canvas").on("touchstart touchmove touchend", function(e) {
-        e.preventDefault();
-        $(this).ca2d("step");
-      });
+      // Redraw only the cells that changed state
+      for (let row = 0; row < rows; row++) {
+        for (let col = 0; col < cols; col++) {
+          const i = row * cols + col;
+          if (next[i] !== current[i]) {
+            ctx.fillStyle = next[i] ? COLOR_ALIVE : COLOR_DEAD;
+            ctx.fillRect(col * CELL_SIZE, row * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+          }
+        }
+      }
+
+      // Swap front and back buffers
+      [current, next] = [next, current];
+    }
+
+    /** Draw all cells (used after init or resize). */
+    function drawAll() {
+      for (let row = 0; row < rows; row++) {
+        for (let col = 0; col < cols; col++) {
+          ctx.fillStyle = current[row * cols + col] ? COLOR_ALIVE : COLOR_DEAD;
+          ctx.fillRect(col * CELL_SIZE, row * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+        }
+      }
+    }
+
+    return { init, step };
+  }
+
+  // --- Bootstrap ---
+
+  if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    const canvas = document.getElementById('gol-canvas');
+    const gol = createGameOfLife(canvas);
+
+    gol.init();
+    window.addEventListener('resize', gol.init);
+    document.getElementById('gol-reset').addEventListener('click', gol.init);
+
+    const STEP_INTERVAL_MS = 50; // minimum ms between steps
+    let lastStepAt = 0;
+
+    function throttledStep() {
+      const now = Date.now();
+      if (now - lastStepAt < STEP_INTERVAL_MS) return;
+      lastStepAt = now;
+      gol.step();
+    }
+
+    const isTouchDevice = /iPhone|iPad/.test(navigator.userAgent);
+    if (isTouchDevice) {
+      canvas.addEventListener('touchstart', (e) => { e.preventDefault(); throttledStep(); }, { passive: false });
+      canvas.addEventListener('touchmove',  (e) => { e.preventDefault(); throttledStep(); }, { passive: false });
+      canvas.addEventListener('touchend',   (e) => { e.preventDefault(); throttledStep(); }, { passive: false });
     } else {
-      $("#gol-canvas").on("mousemove", function(e) {
-        $(this).ca2d("step");
-      });
+      canvas.addEventListener('mousemove', throttledStep);
     }
-  });
+  }
   </script>
 </body>
 </html>
