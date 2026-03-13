@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>kakipo.com</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Hiragino Sans", sans-serif;
+      color: #333;
+    }
+
+    #gol-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: -1;
+    }
+
+    .content {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 80px 24px 80px;
+    }
+
+    .name {
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      line-height: 1.2;
+    }
+
+    .handle {
+      font-size: 0.95rem;
+      color: #888;
+      margin-top: 4px;
+      letter-spacing: 0.03em;
+    }
+
+    .tagline {
+      margin-top: 10px;
+      font-size: 0.95rem;
+      color: #555;
+      line-height: 1.8;
+    }
+
+    hr {
+      border: none;
+      border-top: 1px solid #ddd;
+      margin: 32px 0;
+    }
+
+    h2 {
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #aaa;
+      margin-bottom: 12px;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    ul li {
+      font-size: 0.95rem;
+      color: #444;
+      line-height: 1.9;
+    }
+
+    p {
+      font-size: 0.95rem;
+      color: #444;
+      line-height: 1.8;
+    }
+
+    .links a {
+      display: inline-block;
+      font-size: 0.9rem;
+      color: #555;
+      text-decoration: none;
+      margin-right: 16px;
+      line-height: 2.2;
+    }
+
+    .links a:hover {
+      color: #111;
+    }
+
+    .last-updated {
+      font-size: 0.8rem;
+      color: #bbb;
+      margin-top: 32px;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="gol-canvas"></canvas>
+
+  <div class="content">
+    {{ content }}
+  </div>
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+  <script src="{{ '/assets/js/jquery.ca2d.min.js' | relative_url }}"></script>
+  <script>
+  $(document).ready(function() {
+    function initCanvas() {
+      var w = window.innerWidth;
+      var h = window.innerHeight;
+      $("#gol-canvas").attr("width", w).attr("height", h);
+      $("#gol-canvas").removeData("ca2d");
+      $("#gol-canvas").ca2d({
+        color: function(state) {
+          return state == 1 ? "#dfdfdf" : "#fafafa";
+        }
+      });
+      $("#gol-canvas").ca2d("step");
+    }
+
+    $(window).on("resize", initCanvas);
+    initCanvas();
+
+    var agent = navigator.userAgent;
+    if (agent.search(/iPhone/) != -1 || agent.search(/iPad/) != -1) {
+      $("#gol-canvas").on("touchstart touchmove touchend", function(e) {
+        e.preventDefault();
+        $(this).ca2d("step");
+      });
+    } else {
+      $("#gol-canvas").on("mousemove", function(e) {
+        $(this).ca2d("step");
+      });
+    }
+  });
+  </script>
+</body>
+</html>
