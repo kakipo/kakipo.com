@@ -152,6 +152,22 @@
       #gol-reset  { display: none; }
       .content    { transition: none; }
     }
+
+    /* 画面高さが小さい場合（スマホ横向きなど）はコンテンツのみ表示・スクロール許可 */
+    @media (max-height: 500px) {
+      body {
+        touch-action: auto;
+        overscroll-behavior: auto;
+        overflow-y: auto;
+      }
+      #gol-canvas { display: none; }
+      #gol-reset  { display: none; }
+      #card-close { display: none; }
+      .content {
+        margin: 20px auto;
+        padding: 24px 28px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -449,7 +465,8 @@
 
       window.addEventListener('touchmove', (e) => {
         if (resetBtn.contains(e.target)) return;
-        e.preventDefault(); // スクロール抑止 (passive: false が必要)
+        // 小さい画面（スマホ横向きなど）はスクロールを許可してGoLステップのみ実行
+        if (window.innerHeight > 500) e.preventDefault();
         throttledStep();
       }, { passive: false });
 
