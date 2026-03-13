@@ -80,6 +80,7 @@
     }
 
     .content {
+      position: relative;
       max-width: 640px;
       margin: 60px auto;
       padding: 40px;
@@ -88,7 +89,33 @@
       -webkit-backdrop-filter: blur(14px);
       border-radius: 12px;
       box-shadow: 0 4px 24px rgba(0, 0, 0, 0.10);
+      transition: opacity 0.3s ease;
     }
+    .content.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    #card-close {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: none;
+      border: none;
+      border-radius: 50%;
+      font-size: 1.4rem;
+      line-height: 1;
+      color: #999;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+    #card-close:hover { background: rgba(0,0,0,0.07); color: #333; }
+    #card-close:focus { outline: 2px solid #333; outline-offset: 2px; }
 
     .links a:focus {
       outline: 2px solid #333;
@@ -121,6 +148,7 @@
     @media (prefers-reduced-motion: reduce) {
       #gol-canvas { display: none; }
       #gol-reset  { display: none; }
+      .content    { transition: none; }
     }
   </style>
 </head>
@@ -131,6 +159,7 @@
   <div id="gol-status" aria-live="polite" aria-atomic="true" class="sr-only"></div>
 
   <main id="main-content" class="content">
+    <button id="card-close" aria-label="プロフィールカードを閉じる">×</button>
     {{ content }}
   </main>
 
@@ -305,7 +334,26 @@
       }
     }
 
-    return { init, step };
+    /** Place a 2×2 block of cells at canvas coordinates (x, y). All explode next step. */
+    function placeCell(x, y) {
+      const baseCol = Math.floor(x / CELL_SIZE);
+      const baseRow = Math.floor(y / CELL_SIZE);
+      ctx.fillStyle = ALIVE_COLORS[MAX_AGE];
+      for (let dr = 0; dr < 2; dr++) {
+        for (let dc = 0; dc < 2; dc++) {
+          const col = baseCol + dc;
+          const row = baseRow + dr;
+          if (col < 0 || col >= cols || row < 0 || row >= rows) continue;
+          const i    = row * cols + col;
+          current[i] = 1;
+          age[i]     = MAX_AGE; // 次世代で即爆発
+          mutAge[i]  = 0;
+          ctx.fillRect(col * CELL_SIZE, row * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+        }
+      }
+    }
+
+    return { init, step, placeCell };
   }
 
   // --- Bootstrap ---
@@ -315,18 +363,33 @@
     const gol = createGameOfLife(canvas);
     const statusEl = document.getElementById('gol-status');
 
+    const cardEl   = document.getElementById('main-content');
+    const closeBtn = document.getElementById('card-close');
+    const resetBtn = document.getElementById('gol-reset');
+
     function announceReset() {
       gol.init();
+      // カードが閉じていたら復活させる
+      cardEl.classList.remove('hidden');
       statusEl.textContent = 'Game of Life をリセットしました';
       setTimeout(() => { statusEl.textContent = ''; }, 2000);
     }
 
+    closeBtn.addEventListener('click', () => {
+      cardEl.classList.add('hidden');
+      statusEl.textContent = 'プロフィールカードを閉じました';
+      setTimeout(() => { statusEl.textContent = ''; }, 2000);
+      resetBtn.focus(); // フォーカスをリセットボタンへ
+    });
+
     gol.init();
     window.addEventListener('resize', gol.init);
-    document.getElementById('gol-reset').addEventListener('click', announceReset);
+    resetBtn.addEventListener('click', announceReset);
 
-    const STEP_INTERVAL_MS = 50; // minimum ms between steps
-    let lastStepAt = 0;
+    const STEP_INTERVAL_MS  = 50;  // mousemove のステップ間隔 (ms)
+    const PLACE_INTERVAL_MS = 150; // クリック/タップのセル配置間隔 (ms)
+    let lastStepAt  = 0;
+    let lastPlaceAt = 0;
 
     function throttledStep() {
       const now = Date.now();
@@ -335,18 +398,51 @@
       gol.step();
     }
 
+    function throttledPlace(x, y) {
+      const now = Date.now();
+      if (now - lastPlaceAt < PLACE_INTERVAL_MS) return;
+      lastPlaceAt = now;
+      gol.placeCell(x, y);
+    }
+
     const isTouchDevice = /iPhone|iPad/.test(navigator.userAgent);
     if (isTouchDevice) {
-      canvas.addEventListener('touchstart', (e) => { e.preventDefault(); throttledStep(); }, { passive: false });
-      canvas.addEventListener('touchmove',  (e) => { e.preventDefault(); throttledStep(); }, { passive: false });
-      canvas.addEventListener('touchend',   (e) => { e.preventDefault(); throttledStep(); }, { passive: false });
-    } else {
-      const contentEl  = document.getElementById('main-content');
-      const resetBtn   = document.getElementById('gol-reset');
-      window.addEventListener('mousemove', (e) => {
-        if (contentEl.contains(e.target)) return; // カード上ではスキップ
-        if (resetBtn.contains(e.target))  return; // リセットボタン上ではスキップ
+      let touchStartTime = 0, touchStartX = 0, touchStartY = 0;
+
+      canvas.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        touchStartTime = Date.now();
+        touchStartX    = e.touches[0].clientX;
+        touchStartY    = e.touches[0].clientY;
         throttledStep();
+      }, { passive: false });
+
+      canvas.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        throttledStep();
+      }, { passive: false });
+
+      canvas.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        const dt   = Date.now() - touchStartTime;
+        const dx   = e.changedTouches[0].clientX - touchStartX;
+        const dy   = e.changedTouches[0].clientY - touchStartY;
+        // 短いタップ（250ms以内・12px以内の移動）でセルを配置
+        if (dt < 250 && Math.hypot(dx, dy) < 12) {
+          throttledPlace(touchStartX, touchStartY);
+        }
+      }, { passive: false });
+    } else {
+      window.addEventListener('mousemove', (e) => {
+        if (cardEl.contains(e.target))  return; // カード上ではスキップ
+        if (resetBtn.contains(e.target)) return; // リセットボタン上ではスキップ
+        throttledStep();
+      });
+
+      window.addEventListener('click', (e) => {
+        if (cardEl.contains(e.target))  return; // カード上ではスキップ
+        if (resetBtn.contains(e.target)) return; // リセットボタン上ではスキップ
+        throttledPlace(e.clientX, e.clientY);
       });
     }
   }
