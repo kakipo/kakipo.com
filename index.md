@@ -15,6 +15,8 @@ layout: home
   <div class="links">
     <a href="https://x.com/kakipo" aria-label="X (Twitter)" rel="noopener noreferrer" lang="en">X</a>
     <span aria-hidden="true">|</span>
+    <a href="https://www.instagram.com/kakipo" rel="noopener noreferrer" lang="en">Instagram</a>
+    <span aria-hidden="true">|</span>
     <a href="https://www.facebook.com/kensuke.naito" rel="noopener noreferrer" lang="en">Facebook</a>
     <span aria-hidden="true">|</span>
     <a href="https://github.com/kakipo" rel="noopener noreferrer" lang="en">GitHub</a>
