@@ -7,7 +7,7 @@ layout: home
 <p class="profile-body" lang="en">
   a (cat | fashion | interior | music | piano | plants | science fiction | software | tattoo | travel) enthusiast from peaceful city Hiroshima. NO WAR.
 </p>
-<p class="profile-body">1984年生まれ。広島 → カリフォルニア → 東京<br>ソフトウェアエンジニア / 起業家 / 投資家 / 次男 / 夫 / 娘の父</p>
+<p class="profile-body">1984年生まれ。広島 → カリフォルニア → 東京<br>ソフトウェアエンジニア / 起業家 / 投資家 / 学生（ジュエリーデザイン） / 次男 / 夫 / 娘の父</p>
 <p class="profile-body">ペスカタリアン。魚・乳・卵は食べる。肉（哺乳類・鳥類）は食べない。</p>
 
 <nav aria-labelledby="links-heading" class="profile-nav">
